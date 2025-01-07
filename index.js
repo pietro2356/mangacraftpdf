@@ -195,6 +195,6 @@ function craftVolumePDF(volumeFolder, mangaName, chapterSeparator=false){
     let pdfName = `${mangaName} - ${volumeFolder.split('/').pop()}.pdf`;
 
     // Salva il PDF
-    pdf.save(join(ROOT_DIR, mangaName, pdfName));
+    pdf.save(join(ROOT_DIR, mangaName, pdfName).replaceAll(':', ' '));
     console.log(`\nPDF successfully generated: ${volumeFolder}\n\n\n`);
 }

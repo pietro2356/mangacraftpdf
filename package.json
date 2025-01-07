@@ -1,6 +1,6 @@
 {
   "name": "mangacraftpdf",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
@@ -13,7 +13,12 @@
   },
   "bin": "./index.js",
   "type": "module",
-  "keywords": ["manga", "pdf", "image", "converter"],
+  "keywords": [
+    "manga",
+    "pdf",
+    "image",
+    "converter"
+  ],
   "author": "pietro2356",
   "license": "MIT",
   "description": "A tool for creating pdfs from page images",

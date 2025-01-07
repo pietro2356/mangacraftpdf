@@ -26,7 +26,11 @@ const selectedMangaFolder = await select({
 // Select the volumes to convert
 const volumesToConvert = await checkbox({
     message: `Select the volumes of ${selectedMangaFolder} you want to convert:`,
-    choices: convertStringArrayToObjectArray(findVolumes(join(ROOT_DIR, selectedMangaFolder)))
+    choices: convertStringArrayToObjectArray(
+        findVolumes(
+            join(ROOT_DIR, selectedMangaFolder)
+        ).sort((a,b) => parseFloat(a.split('_').pop()) - parseFloat(b.split('_').pop()))
+    )
 });
 console.log(volumesToConvert);
 

@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import {confirm, select, checkbox, search} from '@inquirer/prompts';
+import chalk from "chalk";
 import {readdirSync, readFileSync, statSync} from 'fs';
 import { join } from 'path';
 import { jsPDF } from 'jspdf';
@@ -10,11 +11,18 @@ let customCoverImage = null;
 let wantCustomCover;
 let wantChapterSeparator;
 
+const log = console.log;
+
+const error = chalk.bold.red;
+const warning = chalk.bold.hex('#FFA500'); // Orange color
+const success = chalk.bold.green;
+const debug = chalk.bold.blue;
+const info = chalk.bold.white;
+
 const ROOT_DIR = join("."); // TODO: change this to the root directory of your manga collection
 
-console.log('Current directory: ' + process.cwd() + "\n");
+log(debug('Current directory: ' + process.cwd() + "\n"));
 const FOLDER_IN_CURRENT_DIR_LIST = findManga(ROOT_DIR);
-
 
 
 // Select the manga to convert
@@ -32,7 +40,8 @@ const volumesToConvert = await checkbox({
         ).sort((a,b) => parseFloat(a.split('_').pop()) - parseFloat(b.split('_').pop()))
     )
 });
-console.log(volumesToConvert);
+
+printSelectedVolumes(volumesToConvert);
 
 wantCustomCover = await confirm({
     message: 'Do you want to add a custom cover to the PDF?\nℹ️ Note: if you select "No", the first page of the first volume will be used as cover.',
@@ -57,14 +66,14 @@ wantChapterSeparator = await confirm({
     message: 'Do you want to add a separator between chapters?'
 });
 
-console.log('\n##############################################');
-console.log('Operation completed.\n');
-console.log('Summary:');
-console.log(`Selected manga: ${selectedMangaFolder}`);
-console.log(`Selected volumes: ${volumesToConvert}`);
-console.log(`Want custom cover: ${wantCustomCover ? 'Yes' : 'No'}`);
-if (wantCustomCover) console.log(`Custom cover image: ${customCoverImage}`);
-console.log(`Want chapter separator: ${wantChapterSeparator ? 'Yes' : 'No'}`);
+//log(info('\n##############################################'));
+log(success('\n#### Operation completed ####\n'));
+log(debug('Summary:'));
+log(debug(`Selected manga: ${info(selectedMangaFolder)}`));
+log(debug(`Selected volumes: ${info(volumesToConvert)}`));
+log(debug(`Want custom cover: ${wantCustomCover ? success('Yes') : warning('No')}`));
+if (wantCustomCover) log(debug(`Custom cover image: ${info(customCoverImage)}`));
+log(debug(`Want chapter separator: ${wantChapterSeparator ? success('Yes') : warning('No')}\n\n`));
 
 
 craftPDF(
@@ -112,6 +121,18 @@ function abort(){
     process.exit(1);
 }
 
+function printSelectedVolumes(vols) {
+    let str = "";
+    vols.forEach((vol, index) => {
+        if (index === vols.length-1) {
+            str += vol;
+        }else{
+            str += vol + ", ";
+        }
+    });
+    log(info('Volume selected: ') + success(str));
+}
+
 /**
  * Craft the PDF
  * @param mangaFolder {string} Path to the manga folder
@@ -123,6 +144,8 @@ function craftPDF(mangaFolder, selectedVolumes, customCover, chapterSeparator=fa
     selectedVolumes.forEach(volume => {
         craftVolumePDF(join(ROOT_DIR, mangaFolder, volume), mangaFolder, chapterSeparator);
     });
+
+    log(success(`All volumes of ${mangaFolder} successfully converted to PDF.`));
 }
 
 function craftVolumePDF(volumeFolder, mangaName, chapterSeparator=false){
@@ -135,7 +158,7 @@ function craftVolumePDF(volumeFolder, mangaName, chapterSeparator=false){
     });
 
     const CHAPTER_FOLDER_LIST = findVolumes(volumeFolder);
-    console.log(CHAPTER_FOLDER_LIST); // TODO: Remove log
+    printSelectedVolumes(CHAPTER_FOLDER_LIST);
 
     let pageNumber = 1;
 
@@ -144,16 +167,16 @@ function craftVolumePDF(volumeFolder, mangaName, chapterSeparator=false){
         const images = readdirSync(chapterPath).filter(file => file.endsWith('.png') || file.endsWith('.jpg'));
 
         if (images.length === 0) {
-            console.log(`There are no images in the ${chapterPath}.`);
+            log(error(`There are no images in the ${chapterPath}.`));
             abort();
         }
 
         images.sort((a, b) => parseFloat(a) - parseFloat(b));
 
-        console.log(`${chapter}`);
+        //console.log(`${chapter}`);
 
         if (customCoverImage !== null && (chapterSeparator || pageNumber === 1)){
-            console.log(`Adding custom cover image: ${customCoverImage}`);
+            //log(debug(`Adding custom cover image: ${customCoverImage}`));
             images.unshift(customCoverImage);
         }
 
@@ -182,7 +205,7 @@ function craftVolumePDF(volumeFolder, mangaName, chapterSeparator=false){
             pdf.addImage(img, image.split('.').pop().toUpperCase(), 0, 0, pdfWidth, pdfHeight);
         });
 
-        console.log(`## chapter ${chapter} successfully converted.`);
+        log(info(`Chapter ${chapter} successfully converted.`));
 
         if (pageNumber !== pdf.getNumberOfPages()){
             // FIXME: Check if this is necessary and what to do with it
@@ -192,7 +215,7 @@ function craftVolumePDF(volumeFolder, mangaName, chapterSeparator=false){
     });
 
     if (pageNumber !== pdf.getNumberOfPages()){
-        console.error(`Error: The number of pages in the PDF (${pdf.getNumberOfPages()}) does not match the number of converted pages (${pageNumber}).`);
+        log(error(`Error: The number of pages in the PDF (${pdf.getNumberOfPages()}) does not match the number of converted pages (${pageNumber}).`));
         abort();
     }
 
@@ -200,5 +223,5 @@ function craftVolumePDF(volumeFolder, mangaName, chapterSeparator=false){
 
     // Salva il PDF
     pdf.save(join(ROOT_DIR, mangaName, pdfName));
-    console.log(`\nPDF successfully generated: ${volumeFolder}\n\n\n`);
+    log(success(`PDF successfully generated: ${debug(volumeFolder)}\n`));
 }

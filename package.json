@@ -5,7 +5,8 @@
   "scripts": {
     "start": "node index.js",
     "test": "echo Warn: no test specified",
-    "release": "release-it"
+    "release": "release-it",
+    "dev": "node color.js"
   },
   "repository": {
     "type": "git",
@@ -24,6 +25,7 @@
   "description": "A tool for creating pdfs from page images",
   "dependencies": {
     "@inquirer/prompts": "^7.2.1",
+    "chalk": "^5.4.1",
     "image-to-pdf": "^3.0.1",
     "jspdf": "^2.5.2"
   },

@@ -134,8 +134,8 @@ function craftVolumePDF(volumeFolder, mangaName, chapterSeparator=false){
         floatPrecision: 16 // or "smart", default is 16
     });
 
-    const CHAPTER_FOLDER_LIST = readdirSync(volumeFolder);
-    console.log(CHAPTER_FOLDER_LIST);
+    const CHAPTER_FOLDER_LIST = findVolumes(volumeFolder);
+    console.log(CHAPTER_FOLDER_LIST); // TODO: Remove log
 
     let pageNumber = 1;
 
@@ -196,9 +196,9 @@ function craftVolumePDF(volumeFolder, mangaName, chapterSeparator=false){
         abort();
     }
 
-    let pdfName = `${mangaName} - ${volumeFolder.split('/').pop()}.pdf`;
+    let pdfName = `${mangaName.replaceAll(':', '')} - ${volumeFolder.split('/').pop()}.pdf`;
 
     // Salva il PDF
-    pdf.save(join(ROOT_DIR, mangaName, pdfName).replaceAll(':', ' '));
+    pdf.save(join(ROOT_DIR, mangaName, pdfName));
     console.log(`\nPDF successfully generated: ${volumeFolder}\n\n\n`);
 }

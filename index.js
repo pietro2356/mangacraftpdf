@@ -6,8 +6,6 @@ import {readdirSync, readFileSync, statSync} from 'fs';
 import { join } from 'path';
 import { jsPDF } from 'jspdf';
 import * as path from "node:path";
-// const gracefulCtrlC = require('@dalane/graceful-ctrl-c');
-import gracefulCtrlC from '@dalane/graceful-ctrl-c';
 
 let files = [];
 let customCoverImage = null;
@@ -25,7 +23,7 @@ const success = chalk.bold.green;
 const debug = chalk.bold.blue;
 const info = chalk.bold.white;
 
-const ROOT_DIR = join("./manga"); // TODO: change this to the root directory of your manga collection
+const ROOT_DIR = join("./"); // TODO: change this to the root directory of your manga collection
 
 
 log(debug('Current directory: ' + process.cwd() + "\n"));

@@ -1,15 +1,21 @@
 #!/usr/bin/env node
 
-import {confirm, select, checkbox, search} from '@inquirer/prompts';
+import {confirm, select, checkbox, search, number} from '@inquirer/prompts';
 import chalk from "chalk";
 import {readdirSync, readFileSync, statSync} from 'fs';
 import { join } from 'path';
 import { jsPDF } from 'jspdf';
 import * as path from "node:path";
+// const gracefulCtrlC = require('@dalane/graceful-ctrl-c');
+import gracefulCtrlC from '@dalane/graceful-ctrl-c';
+
 let files = [];
 let customCoverImage = null;
 let wantCustomCover;
 let wantChapterSeparator;
+let defaultFormat = null;
+
+const formats = ["a4", "a3", "letter", "legal", "a5", "b5", "CUSTOM"];
 
 const log = console.log;
 
@@ -19,7 +25,8 @@ const success = chalk.bold.green;
 const debug = chalk.bold.blue;
 const info = chalk.bold.white;
 
-const ROOT_DIR = join("."); // TODO: change this to the root directory of your manga collection
+const ROOT_DIR = join("./manga"); // TODO: change this to the root directory of your manga collection
+
 
 log(debug('Current directory: ' + process.cwd() + "\n"));
 const FOLDER_IN_CURRENT_DIR_LIST = findManga(ROOT_DIR);
@@ -42,6 +49,37 @@ const volumesToConvert = await checkbox({
 });
 
 printSelectedVolumes(volumesToConvert);
+
+defaultFormat = await confirm({
+    message: 'Do you want to use the default format (A4) for the PDF?',
+});
+
+if (defaultFormat) {
+    log(success('Default format selected: A4'));
+    defaultFormat = 'A4';
+}else{
+    defaultFormat = await select({
+        message: 'Select the format for the PDF:',
+        choices: formats.map(format => ({name: format, value: format})),
+        default: defaultFormat ? "A4" : "Custom"
+    });
+
+    console.log(`Selected format: ${defaultFormat}`);
+
+        if(defaultFormat === "CUSTOM") {
+        const customWidth = await number({
+            message: 'Enter the custom width for the PDF:',
+        });
+
+        const customHeight = await number({
+            message: 'Enter the custom height for the PDF:',
+        });
+
+        defaultFormat = [+customWidth, +customHeight];
+
+        console.log(`Custom format selected: [${defaultFormat}] -> ${Array.isArray(defaultFormat)}`);
+    }
+}
 
 wantCustomCover = await confirm({
     message: 'Do you want to add a custom cover to the PDF?\nℹ️ Note: if you select "No", the first page of the first volume will be used as cover.',
@@ -152,8 +190,10 @@ function craftVolumePDF(volumeFolder, mangaName, chapterSeparator=false){
     const pdf = new jsPDF({
         orientation: 'p',
         unit: 'pt',
-        format: 'a4',
-        putOnlyUsedFonts: true,
+        format: defaultFormat, // Use the selected format
+        //format: 'a4', // or 'letter', 'legal', etc.
+        //format: [764, 1200],
+		putOnlyUsedFonts: true,
         floatPrecision: 16 // or "smart", default is 16
     });
 
@@ -183,6 +223,7 @@ function craftVolumePDF(volumeFolder, mangaName, chapterSeparator=false){
         images.forEach((image, index) => {
             let imgData;
             let img;
+			try{
 
             if (customCoverImage !== null && index === 0){
                 imgData = readFileSync(customCoverImage).toString('base64');
@@ -203,7 +244,14 @@ function craftVolumePDF(volumeFolder, mangaName, chapterSeparator=false){
             }
 
             pdf.addImage(img, image.split('.').pop().toUpperCase(), 0, 0, pdfWidth, pdfHeight);
-        });
+			}catch(e){
+				log(error(`Error: ${e.message}`));
+                log(error(`Stack: ${e.stack}`));
+                log(debug(`Chapter: ${chapter}`));
+                log(debug(`Image: ${image}`));
+                abort();
+			}
+		});
 
         log(info(`Chapter ${chapter} successfully converted.`));
 
@@ -225,3 +273,5 @@ function craftVolumePDF(volumeFolder, mangaName, chapterSeparator=false){
     pdf.save(join(ROOT_DIR, mangaName, pdfName));
     log(success(`PDF successfully generated: ${debug(volumeFolder)}\n`));
 }
+
+

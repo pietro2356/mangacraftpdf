@@ -196,6 +196,11 @@ function craftVolumePDF(volumeFolder, mangaName, chapterSeparator=false){
     });
 
     const CHAPTER_FOLDER_LIST = findVolumes(volumeFolder);
+    CHAPTER_FOLDER_LIST.sort((a, b) => {
+        const aNum = parseInt(a.match(/Ch\.(\d+)/)[1]);
+        const bNum = parseInt(b.match(/Ch\.(\d+)/)[1]);
+        return aNum - bNum;
+    });
     printSelectedVolumes(CHAPTER_FOLDER_LIST);
 
     let pageNumber = 1;

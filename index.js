@@ -42,7 +42,11 @@ const volumesToConvert = await checkbox({
     choices: convertStringArrayToObjectArray(
         findVolumes(
             join(ROOT_DIR, selectedMangaFolder)
-        ).sort((a,b) => parseFloat(a.split('_').pop()) - parseFloat(b.split('_').pop()))
+        ).sort((a, b) => {
+            const aNum = parseInt(a.match(/Vol\.(\d+)/)[1]);
+            const bNum = parseInt(b.match(/Vol\.(\d+)/)[1]);
+            return aNum - bNum;
+        })
     )
 });
 
